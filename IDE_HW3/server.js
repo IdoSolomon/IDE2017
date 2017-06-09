@@ -12,7 +12,6 @@ var conversionRate = 3.7;
 var app = express(); // activating express
 app.use(cors());
 app.use(bodyParser.json()); // Enabling access to "req.body" as a json file.
-app.use(express.cookieParser());
 app.listen(3100); // server is open and listening on port 3100, to access: localhost:3100 in any browser.
 
 var config = {
