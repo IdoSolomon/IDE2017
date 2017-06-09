@@ -1,0 +1,20 @@
+{
+  "name": "ide_hw3",
+  "version": "0.0.0",
+  "description": "IDE_HW3",
+  "main": "server.js",
+  "author": {
+    "name": "Ido"
+  },
+  "dependencies": {
+    "body-parser": "^1.17.2",
+    "cookie": "^0.3.1",
+    "cookies": "^0.7.0",
+    "cors": "^2.8.3",
+    "express": "^4.15.3",
+    "moment": "^2.18.1",
+    "squel": "^5.10.0",
+    "tedious": "^2.0.0"
+  },
+  "devDependencies": {}
+}
