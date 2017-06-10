@@ -340,13 +340,13 @@ connection.on('connect', function (err) {
             .then(function (ans) {
                 if (ans == true) {
                     buildItemUpdateQuery(req)
-                    .then(function (query) {
-                        sql.Update(connection, query)
-                            .then(function (ans) {
-                                res.send(ans);
-                            })
+                        .then(function (query) {
+                            sql.Update(connection, query)
+                                .then(function (ans) {
+                                    res.send(ans);
+                                })
 
-                    })
+                        })
                 }
             })
             .catch(function (ans) {
@@ -899,22 +899,22 @@ connection.on('connect', function (err) {
                         .toString()
                 );
                 sql.Select(connection, query)
-                    .then(function(ans) {
+                    .then(function (ans) {
                         if (ans.length == 1)
                             resolve(true)
                         else
                             reject("You don`t have admin permission. Please go.");
                     })
-                    .catch(function(ans) {
+                    .catch(function (ans) {
                         reject(ans);
                     })
 
             });
     }
 
-    let validateUserIsManagers = function(req) {
+    let validateUserIsManagers = function (req) {
         return new Promise(
-            function(resolve, reject) {
+            function (resolve, reject) {
                 var name = req.body.Username;
                 var query = (
                     squel.select()
