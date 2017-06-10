@@ -334,6 +334,16 @@ connection.on('connect', function (err) {
 
     });
 
+    app.post('/ManagerLogin', function (req, res) {
+
+        managerLogin(req)
+            .then(function (query) {
+                res.send("Login as manager succeeded");
+            })
+            .catch(function (reson) {
+                res.send(reson);
+            })
+    });
 
     app.post('/UpdateItemDetails', function (req, res) {
         validateUserIsManager(req)
@@ -884,7 +894,7 @@ connection.on('connect', function (err) {
             });
     }
 
-    let validateUserIsManager = function (req) {
+    let managerLogin = function (req) {
         return new Promise(
             function (resolve, reject) {
                 var name = req.body.Username;
@@ -912,7 +922,7 @@ connection.on('connect', function (err) {
             });
     }
 
-    let validateUserIsManagers = function(req) {
+    let validateUserIsManager = function(req) {
         return new Promise(
             function(resolve, reject) {
                 var name = req.body.Username;
