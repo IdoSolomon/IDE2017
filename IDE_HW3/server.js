@@ -334,6 +334,16 @@ connection.on('connect', function (err) {
 
     });
 
+    app.post('/ManagerLogin', function (req, res) {
+
+        managerLogin(req)
+            .then(function (query) {
+                res.send("Login as manager succeeded");
+            })
+            .catch(function (reson) {
+                res.send(reson);
+            })
+    });
 
     app.post('/UpdateItemDetails', function (req, res) {
         validateUserIsManager(req)
@@ -407,7 +417,7 @@ connection.on('connect', function (err) {
                 }
                 var query = (
                     squel.update()
-                        .table("[dbo].[Beer]")
+                        .table("[dbo].[Beers]")
                         .set(strSet)
                         .where("[ID] = '{0}'".replace("{0}", req.body.BeerID))
                         .toString()
@@ -884,7 +894,7 @@ connection.on('connect', function (err) {
             });
     }
 
-    let validateUserIsManager = function (req) {
+    let managerLogin = function (req) {
         return new Promise(
             function (resolve, reject) {
                 var name = req.body.Username;
@@ -895,7 +905,7 @@ connection.on('connect', function (err) {
                         .from("[dbo].[Users]")
                         .where("[dbo].[Users].[Username] = \'{0}\'".replace('{0}', name))
                         .where("[dbo].[Users].[IsManager] = 1")
-                        .where("[dbo].[Users].[IsManager] = 1".replace('{1}', pass))
+                        .where("[dbo].[Users].[Password] = \'{1}\'".replace('{1}', pass))
                         .toString()
                 );
                 sql.Select(connection, query)
@@ -912,15 +922,14 @@ connection.on('connect', function (err) {
             });
     }
 
-    let validateUserIsManagers = function (req) {
+    let validateUserIsManager = function (req) {
         return new Promise(
             function (resolve, reject) {
                 var name = req.body.Username;
                 var query = (
                     squel.select()
                         .from("[dbo].[Users]")
-                        .where("[dbo].[Users].[Username] = \'{0}\'  AND [dbo].[Users].[Password] = \'{1}\'".replace('{0}', name)
-                            .replace('{1}', pass))
+                        .where("[dbo].[Users].[Username] = \'{0}\'  AND [dbo].[Users].[IsManager] = 1".replace('{0}', name))
                         .toString()
                 );
                 sql.Select(connection, query)
