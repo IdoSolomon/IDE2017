@@ -66,7 +66,6 @@ exports.Insert = function(connection, query) {
         });
 
         req.on('requestCompleted', function () {
-
             resolve(true);
         });
 
@@ -75,39 +74,45 @@ exports.Insert = function(connection, query) {
 
 }
 
-exports.Delete = function(connection, query, callback) {
+exports.Delete = function(connection, query) {
     console.log('Removing rows from the Table...');
+    console.log(query);
 
-    var req = new Request(query, function (err, rowCount) {
-        if (err) {
-            console.log(err);
-        }
+    return new Promise(function (resolve, reject) {
+        var req = new Request(query, function (err, rowCount) {
+            if (err) {
+                console.log(err);
+                reject(err);
+            }
+        });
+
+        req.on('requestCompleted', function () {
+            resolve(true);
+        });
+
+        connection.execSql(req);
     });
-
-    req.on('requestCompleted', function () {
-        
-        callback("Request Completed");
-    });
-
-    connection.execSql(req);
 
 }
 
-exports.Update = function(connection, query, callback) {
+exports.Update = function(connection, query) {
     console.log('Changing rows in the Table...');
+    console.log(query);
 
-    var req = new Request(query, function (err, rowCount) {
-        if (err) {
-            console.log(err);
-        }
+    return new Promise(function (resolve, reject) {
+        var req = new Request(query, function (err, rowCount) {
+            if (err) {
+                console.log(err);
+                reject(err);
+            }
+        });
+
+        req.on('requestCompleted', function () {
+            resolve(true);
+        });
+
+        connection.execSql(req);
     });
-
-    req.on('requestCompleted', function () {
-        
-        callback("Request Completed");
-    });
-
-    connection.execSql(req);
 
 }
 
