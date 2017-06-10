@@ -56,6 +56,7 @@ exports.Select = function (connection, query) {
 exports.Insert = function(connection, query) {
     console.log('Adding rows to the Table...');
     console.log(query);
+
     return new Promise(function (resolve, reject) {
         var req = new Request(query, function (err, rowCount) {
             if (err) {
