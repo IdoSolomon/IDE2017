@@ -239,7 +239,14 @@ connection.on('connect', function (err) {
 
     app.post('/MakeOrder', function (req, res) {
 
-        //TODO
+        buildMakeOrderQuery(req)
+            .then(function (query) {
+                sql.Insert(connection, query)
+                    .then(function (ans) {
+                        //console.log(ans[0]);
+                    })
+
+            })
 
     });
 
@@ -261,14 +268,18 @@ connection.on('connect', function (err) {
 
     });
 
-    let buildGetOrderSumQuery = function (req) {
+    let buildMakeOrderQuery = function (req) {
         return new Promise(
             function (resolve, reject) {
                 var query = (
-                    squel.select()
-                        .field()
-                        .from()
-                        .where()
+                    squel.insert()
+                        .into("[dbo].[User-Orders]")
+                        .set("[Username]", req.body.Username)
+                        .set("[OrderDate]", req.body.OrderDate)
+                        .set("[ShippingDate]", req.body.ShippingDate)
+                        .set("[Currency]", req.body.Currency)
+                        .set("[CreditCard]", req.body.CreditCard)
+                        .set("[Total]", null)
                         .toString()
                 );
                 console.log("Query is: " + query)
@@ -312,6 +323,7 @@ connection.on('connect', function (err) {
                         .field("[dbo].[User-Orders].[OrderID]")
                         .field("[dbo].[User-Orders].[OrderDate]")
                         .field("[dbo].[User-Orders].[ShippingDate]")
+                        .field("[dbo].[User-Orders].[Currency]")
                         .field("[dbo].[User-Orders].[Total]")
                         .field("[dbo].[Beers].[Name]")
                         .field("[dbo].[Beers].[AlcoholPercentage]")
