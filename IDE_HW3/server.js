@@ -336,16 +336,22 @@ connection.on('connect', function (err) {
 
 
     app.post('/UpdateItemDetails', function (req, res) {
+        validateUserIsManager(req)
+            .then(function (ans) {
+                if (ans == true) {
+                    buildItemUpdateQuery(req)
+                    .then(function (query) {
+                        sql.Update(connection, query)
+                            .then(function (ans) {
+                                res.send(ans);
+                            })
 
-        buildItemUpdateQuery(req)
-            .then(function (query) {
-                sql.Update(connection, query)
-                    .then(function (ans) {
-                        res.send(ans);
                     })
-
+                }
             })
-
+            .catch(function (ans) {
+                res.send("User is not a manager.")
+            })
     });
 
     app.post('/AddItem', function (req, res) {
