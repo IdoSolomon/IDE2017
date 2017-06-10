@@ -358,16 +358,6 @@ connection.on('connect', function (err) {
         return new Promise(
             function (resolve, reject) {
                 var query = "UPDATE Table_A SET Table_A.[Quantity] = (Table_A.[Quantity] - Table_B.[Quantity]) FROM [dbo].[Stock] AS Table_A INNER JOIN [dbo].[Orders] AS Table_B ON Table_A.[BeerID] = Table_B.[BeerID] WHERE Table_B.[OrderID] = '{0}'".replace("{0}", id);
-
-                //var query = (
-                //    squel.update()
-                //        .table("[dbo].[Stock]", "s")
-                //        .table("[dbo].[Orders]", "o")
-                //        .set("s.[Quantity] = (s.[Quantity] - o.[Quantity])")
-                //        .where("s.[BeerID] = o.[BeerID]")
-                //        .where("o.[OrderID] = '{0}'".replace("{0}", id))
-                //        .toString()
-                //);
                 console.log("Query is: " + query)
                 resolve(query)
             }
