@@ -30,22 +30,22 @@ var config = {
 
 var connection = new Connection(config);
 
-connection.on('connect', function(err) {
+connection.on('connect', function (err) {
     if (err) {
         console.log(err)
     }
-    app.get('/', function(req, res) {
+    app.get('/', function (req, res) {
 
         res.send("Connected to DB.");
     });
 
-    app.post('/Login', function(req, res) {
+    app.post('/Login', function (req, res) {
         validateLoginDetails(req)
-            .then(function(loginSucceeded) {
+            .then(function (loginSucceeded) {
                 Cookies.set('name', 'value', { expires: 7 });
                 res.send("Great Success");
             })
-            .catch(function(reason) {
+            .catch(function (reason) {
                 res.send(reason);
             })
 
@@ -53,11 +53,11 @@ connection.on('connect', function(err) {
 
 
 
-    app.get('/GetCountryList', function(req, res) {
+    app.get('/GetCountryList', function (req, res) {
         buildGetCountriesQuerry(req)
-            .then(function(query) {
+            .then(function (query) {
                 sql.Select(connection, query)
-                    .then(function(ans) {
+                    .then(function (ans) {
                         res.send(ans);
                     }
                     )
@@ -65,15 +65,15 @@ connection.on('connect', function(err) {
             })
     });
 
-    app.get('/GetHottest5', function(req, res) {
+    app.get('/GetHottest5', function (req, res) {
 
         var x = Cookies.get('name'); // => 'value' 
 
 
         buildGetGetHottest5Querry(req)
-            .then(function(query) {
+            .then(function (query) {
                 sql.Select(connection, query)
-                    .then(function(ans) {
+                    .then(function (ans) {
                         res.send(ans);
                     }
                     )
@@ -81,11 +81,11 @@ connection.on('connect', function(err) {
             })
     });
 
-    app.get('/GetNewProducts', function(req, res) {
+    app.get('/GetNewProducts', function (req, res) {
         buildGetNewProductsQuerry(req)
-            .then(function(query) {
+            .then(function (query) {
                 sql.Select(connection, query)
-                    .then(function(ans) {
+                    .then(function (ans) {
                         res.send(ans);
                     })
 
@@ -93,49 +93,49 @@ connection.on('connect', function(err) {
 
     });
 
-    app.get('/GetConversionRate', function(req, res) {
+    app.get('/GetConversionRate', function (req, res) {
         var ans = [];
         ans.push(conversionRate);
         res.send(ans);
 
     });
 
-    app.post('/Register', function(req, res) {
+    app.post('/Register', function (req, res) {
         CheckIfUniqueUserName(req)
-            .then(function(reason) {
+            .then(function (reason) {
                 if (reason) {
                     UpdateNewUserInUsersTable(req)
-                        .then(function(reason) {
+                        .then(function (reason) {
                             if (reason) {
                                 UpdateSecurityQuestion(req)
-                                    .then(function(reason) {
+                                    .then(function (reason) {
                                         if (reason) {
                                             UpdateUserCategories(req)
-                                                .then(function(reason) {
+                                                .then(function (reason) {
                                                     if (reason) {
                                                         var myObj = { "Succeeded": true, "Details": "Registration succeeded!" };
                                                         res.send(myObj);
                                                     }
                                                 })
-                                                .catch(function(reason) {
+                                                .catch(function (reason) {
                                                     var myObj = { "Succeeded": false, "Details": reason };
                                                     res.send(myObj);
                                                 })
                                         }
                                     })
-                                    .catch(function(reason) {
+                                    .catch(function (reason) {
                                         var myObj = { "Succeeded": false, "Details": reason };
                                         res.send(myObj);
                                     })
                             }
                         })
-                        .catch(function(reason) {
+                        .catch(function (reason) {
                             var myObj = { "Succeeded": false, "Details": reason };
                             res.send(myObj);
                         })
                 }
             })
-            .catch(function(reason) {
+            .catch(function (reason) {
                 res.send({ "Succeeded": false, "Details": reason });
             })
 
@@ -145,20 +145,20 @@ connection.on('connect', function(err) {
 
 
 
-    app.post('/IsUniqueUsername', function(req, res) {
+    app.post('/IsUniqueUsername', function (req, res) {
         CheckIfUniqueUserName(req)
-            .then(function(reason) {
+            .then(function (reason) {
                 if (reason) {
                     var myObj = { "Succeeded": true, "Details": "Registration succeeded!" };
                     res.send(myObj);
                 }
             })
-            .catch(function(reason) {
+            .catch(function (reason) {
                 res.send({ "Ans": false, "Details": reason });
             })
     });
 
-    app.post('/ForgotPassword', function(req, res) {
+    app.post('/ForgotPassword', function (req, res) {
 
         var query = (
             squel.select()
@@ -169,16 +169,16 @@ connection.on('connect', function(err) {
         );
 
         sql.Select(connection, query)
-            .then(function(ans) {
+            .then(function (ans) {
                 res.send(ans);
             })
-            .catch(function(ans) {
+            .catch(function (ans) {
                 res.send(ans);
             })
 
     });
 
-    app.post('/ValidateAnswer', function(req, res) {
+    app.post('/ValidateAnswer', function (req, res) {
 
         var query = (
             squel.select()
@@ -192,7 +192,7 @@ connection.on('connect', function(err) {
         );
 
         sql.Select(connection, query)
-            .then(function(ans) {
+            .then(function (ans) {
                 if (ans.length > 0) {
                     var myObj = { "CorrectAnswer": true, "Password": ans[0].trim() };
                     res.send(myObj);
@@ -202,14 +202,14 @@ connection.on('connect', function(err) {
                     res.send(myObj);
                 }
             })
-            .catch(function(ans) {
+            .catch(function (ans) {
                 var myObj = { "CorrectAnswer": false, "Password": "", "Details": ans };
                 res.send(myObj);
             })
 
     });
 
-    app.post('/GetLastLoginTime', function(req, res) {
+    app.post('/GetLastLoginTime', function (req, res) {
 
         //TODO
         //if (!req.query.token) {
@@ -219,83 +219,83 @@ connection.on('connect', function(err) {
 
     });
 
-    app.post('/GetRecommended', function(req, res) {
+    app.post('/GetRecommended', function (req, res) {
 
         buildGetRecommendedQuery(req)
-            .then(function(query) {
+            .then(function (query) {
                 sql.Select(connection, query)
-                    .then(function(ans) {
+                    .then(function (ans) {
                         res.send(ans);
                     })
             })
 
     });
 
-    app.post('/Search', function(req, res) {
+    app.post('/Search', function (req, res) {
 
         buildSearchQuery(req)
-            .then(function(query) {
+            .then(function (query) {
                 sql.Select(connection, query)
-                    .then(function(ans) {
+                    .then(function (ans) {
                         res.send(ans);
                     })
             })
 
     });
 
-    app.post('/GetItemDetails', function(req, res) {
+    app.post('/GetItemDetails', function (req, res) {
 
         buildGetItemDetailsQuery(req)
-            .then(function(query) {
+            .then(function (query) {
                 sql.Select(connection, query)
-                    .then(function(ans) {
+                    .then(function (ans) {
                         res.send(ans);
                     })
             })
 
     });
 
-    app.post('/GetPastOrders', function(req, res) {
+    app.post('/GetPastOrders', function (req, res) {
 
         buildGetPastOrdersQuery(req)
-            .then(function(query) {
+            .then(function (query) {
                 sql.Select(connection, query)
-                    .then(function(ans) {
+                    .then(function (ans) {
                         res.send(ans);
                     })
             })
 
     });
 
-    app.post('/MakeOrder', function(req, res) {
+    app.post('/MakeOrder', function (req, res) {
         buildStockCheckQuery(req)
-            .then(function(query) {
+            .then(function (query) {
                 sql.Select(connection, query)
-                    .then(function(ans) {
+                    .then(function (ans) {
                         if (ans.length == 0) {
                             buildMakeOrderQuery(req)
-                                .then(function(query) {
+                                .then(function (query) {
                                     sql.Insert(connection, query)
-                                        .then(function(success) {
+                                        .then(function (success) {
                                             if (success == true)
                                                 buildGetOrderIDQuery(req)
-                                                    .then(function(query) {
+                                                    .then(function (query) {
                                                         sql.Select(connection, query)
-                                                            .then(function(ans) {
+                                                            .then(function (ans) {
                                                                 var id = ans[0].OrderID;
                                                                 buildGetOrderItemsQuery(req, id)
-                                                                    .then(function(query) {
+                                                                    .then(function (query) {
                                                                         sql.Insert(connection, query)
-                                                                            .then(function(ans) {
+                                                                            .then(function (ans) {
                                                                                 if (success == true)
                                                                                     buildUpdateTotalQuery(req, id)
-                                                                                        .then(function(query) {
+                                                                                        .then(function (query) {
                                                                                             sql.Update(connection, query)
-                                                                                                .then(function(ans) {
+                                                                                                .then(function (ans) {
                                                                                                     buildUpdateStockQuery(req, id)
-                                                                                                        .then(function(query) {
+                                                                                                        .then(function (query) {
                                                                                                             sql.Update(connection, query)
-                                                                                                                .then(function(ans) {
+                                                                                                                .then(function (ans) {
                                                                                                                     res.send(ans);
                                                                                                                 })
 
@@ -316,12 +316,12 @@ connection.on('connect', function(err) {
     });
 
 
-    app.post('/IsInStock', function(req, res) {
+    app.post('/IsInStock', function (req, res) {
 
         buildIsInStockQuery(req)
-            .then(function(query) {
+            .then(function (query) {
                 sql.Select(connection, query)
-                    .then(function(ans) {
+                    .then(function (ans) {
                         var verdict = [];
                         if (ans.length > 0)
                             verdict.push(true);
@@ -334,22 +334,87 @@ connection.on('connect', function(err) {
 
     });
 
-    app.post('/ManagerLogin', function(req, res) {
 
-        validateManagerLogin(req)
-            .then(function(query) {
-                res.send("Login as manager succeeded");
+    app.post('/UpdateItemDetails', function (req, res) {
+
+        buildItemUpdateQuery(req)
+            .then(function (query) {
+                sql.Update(connection, query)
+                    .then(function (ans) {
+                        res.send(ans);
+                    })
+
             })
-            .catch(function(reson) {
-                res.send(reson);
-            })
+
     });
 
+    app.post('/AddItem', function (req, res) {
+        //TODO
+    });
 
+    app.post('/RemoveItem', function (req, res) {
+        //TODO
+    });
 
-    let buildStockCheckQuery = function(req) {
+    app.post('/AddUser', function (req, res) {
+        //TODO
+    });
+
+    app.post('/RemoveUser', function (req, res) {
+        //TODO
+    });
+
+    app.post('/GetInventory', function (req, res) {
+        //TODO
+    });
+
+    app.post('/UpdateInventory', function (req, res) {
+        //TODO
+    });
+
+    let buildItemUpdateQuery = function (req) {
         return new Promise(
-            function(resolve, reject) {
+            function (resolve, reject) {
+                var strSet = "";
+                if (typeof req.body.BeerName !== 'undefined' && req.body.BeerName != "") {
+                    strSet += "[Name] = '{0}'".replace('{0}', req.body.BeerName);
+                }
+                if (typeof req.body.CategoryID !== 'undefined' && req.body.CategoryID != "") {
+                    if (strSet != "")
+                        strSet += ", ";
+                    strSet += "[CategoryID] = '{0}'".replace('{0}', req.body.CategoryID);
+                }
+                if (typeof req.body.AlcoholPercentage !== 'undefined' && req.body.AlcoholPercentage != "") {
+                    if (strSet != "")
+                        strSet += ", ";
+                    strSet += "[AlcoholPercentage] = '{0}'".replace('{0}', req.body.AlcoholPercentage);
+                }
+                if (typeof req.body.Price !== 'undefined' && req.body.Price != "") {
+                    if (strSet != "")
+                        strSet += ", ";
+                    strSet += "[Price] = '{0}'".replace('{0}', req.body.Price);
+                }
+                if (typeof req.body.Volume !== 'undefined' && req.body.Volume != "") {
+                    if (strSet != "")
+                        strSet += ", ";
+                    strSet += "[Volume] = '{0}'".replace('{0}', req.body.Volume);
+                }
+                var query = (
+                    squel.update()
+                        .table("[dbo].[Beer]")
+                        .set(strSet)
+                        .where("[ID] = '{0}'".replace("{0}", req.body.BeerID))
+                        .toString()
+                );
+                console.log("Query is: " + query)
+                resolve(query)
+            }
+        );
+    }
+
+    let buildStockCheckQuery = function (req) {
+        return new Promise(
+            function (resolve, reject) {
                 items = req.body.Items;
                 var query = "SELECT [BeerID] FROM [dbo].[Stock] WHERE ";
 
@@ -367,9 +432,9 @@ connection.on('connect', function(err) {
         );
     }
 
-    let buildUpdateStockQuery = function(req, id) {
+    let buildUpdateStockQuery = function (req, id) {
         return new Promise(
-            function(resolve, reject) {
+            function (resolve, reject) {
                 var query = "UPDATE Table_A SET Table_A.[Quantity] = (Table_A.[Quantity] - Table_B.[Quantity]) FROM [dbo].[Stock] AS Table_A INNER JOIN [dbo].[Orders] AS Table_B ON Table_A.[BeerID] = Table_B.[BeerID] WHERE Table_B.[OrderID] = '{0}'".replace("{0}", id);
                 console.log("Query is: " + query)
                 resolve(query)
@@ -377,9 +442,9 @@ connection.on('connect', function(err) {
         );
     }
 
-    let buildUpdateTotalQuery = function(req, id) {
+    let buildUpdateTotalQuery = function (req, id) {
         return new Promise(
-            function(resolve, reject) {
+            function (resolve, reject) {
                 var query = (
                     squel.update()
                         .table("[dbo].[User-Orders]")
@@ -400,9 +465,9 @@ connection.on('connect', function(err) {
         );
     }
 
-    let buildGetOrderItemsQuery = function(req, id) {
+    let buildGetOrderItemsQuery = function (req, id) {
         return new Promise(
-            function(resolve, reject) {
+            function (resolve, reject) {
                 items = req.body.Items;
                 var query = "INSERT INTO [dbo].[Orders] ([OrderID], [BeerID], [Quantity]) VALUES";
 
@@ -420,9 +485,9 @@ connection.on('connect', function(err) {
         );
     }
 
-    let buildGetOrderIDQuery = function(req) {
+    let buildGetOrderIDQuery = function (req) {
         return new Promise(
-            function(resolve, reject) {
+            function (resolve, reject) {
                 var query = (
                     squel.select()
                         .field("[OrderID]")
@@ -440,9 +505,9 @@ connection.on('connect', function(err) {
         );
     }
 
-    let buildMakeOrderQuery = function(req) {
+    let buildMakeOrderQuery = function (req) {
         return new Promise(
-            function(resolve, reject) {
+            function (resolve, reject) {
                 var query = (
                     squel.insert()
                         .into("[dbo].[User-Orders]")
@@ -460,9 +525,9 @@ connection.on('connect', function(err) {
         );
     }
 
-    let buildGetRecommendedQuery = function(req) {
+    let buildGetRecommendedQuery = function (req) {
         return new Promise(
-            function(resolve, reject) {
+            function (resolve, reject) {
                 var query = (
                     squel.select()
                         .field("[ID]")
@@ -487,9 +552,9 @@ connection.on('connect', function(err) {
         );
     }
 
-    let buildGetPastOrdersQuery = function(req) {
+    let buildGetPastOrdersQuery = function (req) {
         return new Promise(
-            function(resolve, reject) {
+            function (resolve, reject) {
                 var query = (
                     squel.select()
                         .field("[dbo].[User-Orders].[OrderID]")
@@ -514,9 +579,9 @@ connection.on('connect', function(err) {
         );
     }
 
-    let buildSearchQuery = function(req) {
+    let buildSearchQuery = function (req) {
         return new Promise(
-            function(resolve, reject) {
+            function (resolve, reject) {
                 var strWhere = "";
                 if (typeof req.body.BeerName !== 'undefined' && req.body.BeerName != "") {
                     strWhere += "[dbo].[Beers].[Name] = '{0}'".replace('{0}', req.body.BeerName);
@@ -560,9 +625,9 @@ connection.on('connect', function(err) {
         );
     }
 
-    let buildGetItemDetailsQuery = function(req) {
+    let buildGetItemDetailsQuery = function (req) {
         return new Promise(
-            function(resolve, reject) {
+            function (resolve, reject) {
                 var query = (
                     squel.select()
                         .field("[dbo].[Beers].[Name]", "BeerName")
@@ -582,9 +647,9 @@ connection.on('connect', function(err) {
         );
     }
 
-    let buildIsInStockQuery = function(req) {
+    let buildIsInStockQuery = function (req) {
         return new Promise(
-            function(resolve, reject) {
+            function (resolve, reject) {
                 var query = (
                     squel.select()
                         .from("[dbo].[Stock]")
@@ -598,9 +663,9 @@ connection.on('connect', function(err) {
         );
     }
 
-    let buildGetCountriesQuerry = function(req) {
+    let buildGetCountriesQuerry = function (req) {
         return new Promise(
-            function(resolve, reject) {
+            function (resolve, reject) {
                 var query = (
                     squel.select()
                         .from("Countries")
@@ -614,9 +679,9 @@ connection.on('connect', function(err) {
 
     }
 
-    let buildGetGetHottest5Querry = function(req) {
+    let buildGetGetHottest5Querry = function (req) {
         return new Promise(
-            function(resolve, reject) {
+            function (resolve, reject) {
                 var currentDate = moment().format('YYYY-MM-DD');
                 var query = " SELECT  [Name], [AlcoholPercentage], [Price], [Volume] " +
                     "FROM [dbo].[Beers] " +
@@ -637,9 +702,9 @@ connection.on('connect', function(err) {
     }
 
 
-    let buildGetNewProductsQuerry = function(req) {
+    let buildGetNewProductsQuerry = function (req) {
         return new Promise(
-            function(resolve, reject) {
+            function (resolve, reject) {
                 var currentDate = moment().format('YYYY-MM-DD');
                 var query = (
                     squel.select()
@@ -655,11 +720,11 @@ connection.on('connect', function(err) {
 
 
     }
-    let CheckIfUniqueUserName = function(req) {
+    let CheckIfUniqueUserName = function (req) {
         console.log("build new promise")
 
         return new Promise(
-            function(resolve, reject) {
+            function (resolve, reject) {
                 var name = req.body.Username.toString();
                 var query = (
                     squel.select()
@@ -670,7 +735,7 @@ connection.on('connect', function(err) {
                 );
                 console.log("Query is: " + query)
                 sql.Select(connection, query).then(
-                    function(ans) {
+                    function (ans) {
                         if (ans.length == 0)
                             resolve(true)
                         else
@@ -682,11 +747,11 @@ connection.on('connect', function(err) {
     }
 
 
-    let UpdateNewUserInUsersTable = function(req) {
+    let UpdateNewUserInUsersTable = function (req) {
         console.log("build new promise")
 
         return new Promise(
-            function(resolve, reject) {
+            function (resolve, reject) {
                 var name = req.body.Username;
                 var pass = req.body.Password;
                 var country = req.body.CountryID;
@@ -701,29 +766,29 @@ connection.on('connect', function(err) {
                 console.log("Query is: " + query)
 
                 sql.Insert(connection, query)
-                    .then(function(succeeded) {
+                    .then(function (succeeded) {
                         resolve(true)
                     })
                     .catch(
-                    function(ans) {
+                    function (ans) {
                         reject(ans);
                     })
 
             });
     }
 
-    let UpdateSecurityQuestion = function(req) {
+    let UpdateSecurityQuestion = function (req) {
         return new Promise(
-            function(resolve, reject) {
+            function (resolve, reject) {
 
                 generateSecurityQuestionQuery(req)
-                    .then(function(query) {
+                    .then(function (query) {
                         console.log(query)
                         sql.Insert(connection, query)
-                            .then(function(succeeded) {
+                            .then(function (succeeded) {
                                 resolve(succeeded);
                             })
-                            .catch(function(ans) {
+                            .catch(function (ans) {
                                 reject(ans)
                             })
                     })
@@ -732,9 +797,9 @@ connection.on('connect', function(err) {
 
     }
 
-    let generateSecurityQuestionQuery = function(req) {
+    let generateSecurityQuestionQuery = function (req) {
         return new Promise(
-            function(resolve, reject) {
+            function (resolve, reject) {
                 questions = req.body.SecurityQuestions;
                 var query = "INSERT INTO [Questions] (Username, Question, Answer ) VALUES ";
                 for (i = 0; i < questions.length; i++) {
@@ -750,18 +815,18 @@ connection.on('connect', function(err) {
             });
     }
 
-    let UpdateUserCategories = function(req) {
+    let UpdateUserCategories = function (req) {
         return new Promise(
-            function(resolve, reject) {
+            function (resolve, reject) {
 
                 generateCatgeoriesQuery(req)
-                    .then(function(query) {
+                    .then(function (query) {
                         console.log(query)
                         sql.Insert(connection, query)
-                            .then(function(succeeded) {
+                            .then(function (succeeded) {
                                 resolve(succeeded);
                             })
-                            .catch(function(ans) {
+                            .catch(function (ans) {
                                 reject(ans)
                             })
                     })
@@ -770,9 +835,9 @@ connection.on('connect', function(err) {
 
     }
 
-    let generateCatgeoriesQuery = function(req) {
+    let generateCatgeoriesQuery = function (req) {
         return new Promise(
-            function(resolve, reject) {
+            function (resolve, reject) {
                 categories = req.body.Categories;
                 var query = "INSERT INTO [User-Categories] (Username, CategoryID ) VALUES ";
                 for (i = 0; i < questions.length; i++) {
@@ -787,9 +852,9 @@ connection.on('connect', function(err) {
             });
     }
 
-    let validateLoginDetails = function(req) {
+    let validateLoginDetails = function (req) {
         return new Promise(
-            function(resolve, reject) {
+            function (resolve, reject) {
                 var name = req.body.Username;
                 var pass = req.body.Password;
                 var query = (
@@ -800,22 +865,22 @@ connection.on('connect', function(err) {
                         .toString()
                 );
                 sql.Select(connection, query)
-                    .then(function(ans) {
+                    .then(function (ans) {
                         if (ans.length == 1)
                             resolve(true)
                         else
                             reject("Wrong Username/Password");
                     })
-                    .catch(function(ans) {
+                    .catch(function (ans) {
                         reject(ans);
                     })
 
             });
     }
 
-    let validateManagerLogin = function(req) {
+    let validateUserIsManager = function (req) {
         return new Promise(
-            function(resolve, reject) {
+            function (resolve, reject) {
                 var name = req.body.Username;
                 var pass = req.body.Password;
 
@@ -848,17 +913,18 @@ connection.on('connect', function(err) {
                 var query = (
                     squel.select()
                         .from("[dbo].[Users]")
-                        .where("[dbo].[Users].[Username] = \'{0}\'  AND [dbo].[Users].[IsManager] = 1".replace('{0}', name))
+                        .where("[dbo].[Users].[Username] = \'{0}\'  AND [dbo].[Users].[Password] = \'{1}\'".replace('{0}', name)
+                            .replace('{1}', pass))
                         .toString()
                 );
                 sql.Select(connection, query)
-                    .then(function(ans) {
+                    .then(function (ans) {
                         if (ans.length == 1)
                             resolve(true)
                         else
-                            reject("You don`t have admin permission. Please go.");
+                            reject("Wrong Username/Password");
                     })
-                    .catch(function(ans) {
+                    .catch(function (ans) {
                         reject(ans);
                     })
 
