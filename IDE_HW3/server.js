@@ -92,33 +92,34 @@ connection.on('connect', function (err) {
 
     app.post('/Register', function (req, res) {
         CheckIfUniqueUserName(req)
-            .then(function (succeeded) {
-                if (succeeded) {
+            .then(function (reason) {
+                if (reason) {
                     UpdateNewUserInUsersTable(req)
-                        .then(function (succeeded) {
-                            if (succeeded) {
+                        .then(function (reason) {
+                            if (reason) {
                                 UpdateSecurityQuestion(req)
-                                    .then(function (succeeded) {
-                                        if (succeeded) {
+                                    .then(function (reason) {
+                                        if (reason) {
                                             var myObj = { "Succeeded": true, "Details": "Registration succeeded!" };
                                             res.send(myObj);
                                         }
-                                        else {
-                                            var myObj = { "Succeeded": false, "Details": "Couldn`t access DB" };
-                                            res.send(myObj);
-                                        }
+                                    })
+                                    .catch(function (reason) {
+                                        var myObj = { "Succeeded": false, "Details": reason };
+                                        res.send(myObj);
                                     })
                             }
-                            else {
-                                var myObj = { "Succeeded": false, "Details": "User name is taken" };
-                                res.send(myObj);
-                            }
+                        })
+                        .catch(function (reason) {
+                            var myObj = { "Succeeded": false, "Details": reason };
+                            res.send(myObj);
                         })
                 }
-                else {
-                    res.send({ "Succeeded": false, "Details": "User name is taken" });
-                }
             })
+            .catch(function (reason) {
+                res.send({ "Succeeded": false, "Details": reason });
+            })
+
 
 
     })
@@ -329,13 +330,16 @@ connection.on('connect', function (err) {
                         .set("CountryID", country)
                         .toString()
                 );
-                sql.Insert(connection, query).then(function (succeeded) {
-                    resolve(true)
-                })
+
+                sql.Insert(connection, query)
+                    .then(function (succeeded) {
+                        resolve(true)
+                    })
                     .catch(
                     function (ans) {
-                        resolve(false)
+                        reject(ans);
                     })
+
             });
     }
 
@@ -350,12 +354,10 @@ connection.on('connect', function (err) {
                             .then(function (succeeded) {
                                 resolve(succeeded);
                             })
-                            .catch(
-                            function (ans) {
-                                resolve(false)
+                            .catch(function (ans) {
+                                reject(ans)
                             })
-                    }
-                    )
+                    })
 
             });
 
@@ -366,13 +368,15 @@ connection.on('connect', function (err) {
             function (resolve, reject) {
                 questions = req.body.SecurityQuestions;
                 var query = "INSERT INTO [Questions] (Username, Question, Answer ) VALUES ";
-                for (i = 0; i < questions.Length; i++) {
+                for (i = 0; i < questions.length; i++) {
                     if (i > 0) {
                         query += ",";
                     }
-                    query += "('" + username + "\', \'" + questions[i].Question + "\', \'" + questions[i].Answer + "\')";
+                    query += "('" + req.body.Username + "\', \'" + questions[i].Question + "\', \'" + questions[i].Answer + "\')";
+                    if (i == questions.length - 1) {
+                        resolve(query);
+                    }
                 }
-                resolve(query);
             });
     }
 });
