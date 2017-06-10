@@ -334,6 +334,84 @@ connection.on('connect', function (err) {
 
     });
 
+
+    app.post('/UpdateItemDetails', function (req, res) {
+
+        buildItemUpdateQuery(req)
+            .then(function (query) {
+                sql.Update(connection, query)
+                    .then(function (ans) {
+                        res.send(ans);
+                    })
+
+            })
+
+    });
+
+    app.post('/AddItem', function (req, res) {
+        //TODO
+    });
+
+    app.post('/RemoveItem', function (req, res) {
+        //TODO
+    });
+
+    app.post('/AddUser', function (req, res) {
+        //TODO
+    });
+
+    app.post('/RemoveUser', function (req, res) {
+        //TODO
+    });
+
+    app.post('/GetInventory', function (req, res) {
+        //TODO
+    });
+
+    app.post('/UpdateInventory', function (req, res) {
+        //TODO
+    });
+
+    let buildItemUpdateQuery = function (req) {
+        return new Promise(
+            function (resolve, reject) {
+                var strSet = "";
+                if (typeof req.body.BeerName !== 'undefined' && req.body.BeerName != "") {
+                    strSet += "[Name] = '{0}'".replace('{0}', req.body.BeerName);
+                }
+                if (typeof req.body.CategoryID !== 'undefined' && req.body.CategoryID != "") {
+                    if (strSet != "")
+                        strSet += ", ";
+                    strSet += "[CategoryID] = '{0}'".replace('{0}', req.body.CategoryID);
+                }
+                if (typeof req.body.AlcoholPercentage !== 'undefined' && req.body.AlcoholPercentage != "") {
+                    if (strSet != "")
+                        strSet += ", ";
+                    strSet += "[AlcoholPercentage] = '{0}'".replace('{0}', req.body.AlcoholPercentage);
+                }
+                if (typeof req.body.Price !== 'undefined' && req.body.Price != "") {
+                    if (strSet != "")
+                        strSet += ", ";
+                    strSet += "[Price] = '{0}'".replace('{0}', req.body.Price);
+                }
+                if (typeof req.body.Volume !== 'undefined' && req.body.Volume != "") {
+                    if (strSet != "")
+                        strSet += ", ";
+                    strSet += "[Volume] = '{0}'".replace('{0}', req.body.Volume);
+                }
+                var query = (
+                    squel.update()
+                        .table("[dbo].[Beer]")
+                        .set(strSet)
+                        .where("[ID] = '{0}'".replace("{0}", req.body.BeerID))
+                        .toString()
+                );
+                console.log("Query is: " + query)
+                resolve(query)
+            }
+        );
+    }
+
     let buildStockCheckQuery = function (req) {
         return new Promise(
             function (resolve, reject) {
