@@ -42,7 +42,7 @@ connection.on('connect', function (err) {
     app.post('/Login', function (req, res) {
         validateLoginDetails(req)
             .then(function (loginSucceeded) {
-                Cookies.set('name', 'value', { expires: 1 });
+                Cookies.set('name', 'value', { expires: 7 });
                 res.send("Great Success");
             })
             .catch(function (reason) {
@@ -775,6 +775,32 @@ connection.on('connect', function (err) {
     }
 
     let validateLoginDetails = function (req) {
+        return new Promise(
+            function (resolve, reject) {
+                var name = req.body.Username;
+                var pass = req.body.Password;
+                var query = (
+                    squel.select()
+                        .from("[dbo].[Users]")
+                        .where("[dbo].[Users].[Username] = \'{0}\'  AND [dbo].[Users].[Password] = \'{1}\'".replace('{0}', name)
+                            .replace('{1}', pass))
+                        .toString()
+                );
+                sql.Select(connection, query)
+                    .then(function (ans) {
+                        if (ans.length == 1)
+                            resolve(true)
+                        else
+                            reject("Wrong Username/Password");
+                    })
+                    .catch(function (ans) {
+                        reject(ans);
+                    })
+
+            });
+    }
+
+    let validateUserIsManager = function (req) {
         return new Promise(
             function (resolve, reject) {
                 var name = req.body.Username;
