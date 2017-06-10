@@ -21,6 +21,8 @@ exports.Select = function (connection, query) {
         var req = new Request(query, function (err, rowCount) {
             if (err) {
                 console.log(err);
+                reject(req);
+
             }
         });
 
@@ -59,6 +61,7 @@ exports.Insert = function(connection, query) {
         var req = new Request(query, function (err, rowCount) {
             if (err) {
                 console.log(err);
+                reject(err);
             }
         });
 
