@@ -91,14 +91,35 @@ connection.on('connect', function (err) {
     });
 
     app.post('/Register', function (req, res) {
-        isUniqueUSerName(req)
-            .then(function (succeded, errMsg) {
-                res.send({ "Succeeded": true, "Message": "Registration cmpleted successfuly!" })
+        CheckIfUniqueUserName(req)
+            .then(function (succeeded) {
+                if (succeeded) {
+                    UpdateNewUserInUsersTable(req)
+                        .then(function (succeeded) {
+                            if (succeeded) {
+                                UpdateSecurityQuestion(req)
+                                    .then(function (succeeded) {
+                                        if (succeeded) {
+                                            var myObj = { "Succeeded": true, "Details": "Registration succeeded!" };
+                                            res.send(myObj);
+                                        }
+                                        else {
+                                            var myObj = { "Succeeded": false, "Details": "Couldn`t access DB" };
+                                            res.send(myObj);
+                                        }
+                                    })
+                            }
+                            else {
+                                var myObj = { "Succeeded": false, "Details": "User name is taken" };
+                                res.send(myObj);
+                            }
+                        })
+                }
+                else {
+                    res.send({ "Succeeded": false, "Details": "User name is taken" });
+                }
             })
-            .catch(function (succeded, errMsg) {
-                res.send({ "Succeeded": false, "Message": errMsg })
 
-            })
 
     })
 
@@ -265,61 +286,93 @@ connection.on('connect', function (err) {
 
 
     }
-    let isUniqueUSerName = function (req) {
+    let CheckIfUniqueUserName = function (req) {
+        console.log("build new promise")
+
         return new Promise(
             function (resolve, reject) {
-                var name = req.body.Username.toString;
+                var name = req.body.Username.toString();
                 var query = (
                     squel.select()
                         .from("[dbo].[Users]")
                         .field("[Users].[Username]")
-                        .where("[Users].[Username] = '{0}'".replace("{0}", name))
+                        .where("[Users].[Username] = " + "'" + name + "'")
                         .toString()
-
                 );
+                console.log(query)
                 sql.Select(connection, query).then(
                     function (ans) {
-                        if (ans.length == 0) {
-                            regeisterUser(req).then(function (succeeded, errMSg) {
-                                if (succeeded == true)
-                                    resolve(true, "")
-                                else
-                                    reject(false, errMSg)
-                            })
-                        }
+                        if (ans.length == 0)
+                            resolve(true)
                         else
-                            reject(false, "User name already exists")
-
-                    }
-                )
-
+                            resolve(false);
+                    })
             }
-        );
-    }
-
-    let registerUser = function (req) {
-        var name = req.body.Username;
-        var pass = req.body.Password;
-        var country = req.body.CountryID;
-        var query = (
-            squel.insert()
-                .into("Users")
-                .set("Username", name)
-                .set("Password", pass)
-                .set("CountryID", country)
-                .toString()
-        );
-        sql.Insert(connection, query).then(
-            function (ans) {
-                resolve(true, "")
-            })
-            .catch(
-            function (ans) {
-                resolve(false, "Could not access DB")
-
-
-            })
+        )
 
     }
 
+
+    let UpdateNewUserInUsersTable = function (req) {
+        console.log("build new promise")
+
+        return new Promise(
+            function (resolve, reject) {
+                var name = req.body.Username;
+                var pass = req.body.Password;
+                var country = req.body.CountryID;
+                var query = (
+                    squel.insert()
+                        .into("Users")
+                        .set("Username", name)
+                        .set("Password", pass)
+                        .set("CountryID", country)
+                        .toString()
+                );
+                sql.Insert(connection, query).then(function (succeeded) {
+                    resolve(true)
+                })
+                    .catch(
+                    function (ans) {
+                        resolve(false)
+                    })
+            });
+    }
+
+    let UpdateSecurityQuestion = function (req) {
+        return new Promise(
+            function (resolve, reject) {
+
+                generateSecurityQuestionQuery(req)
+                    .then(function (query) {
+                        console.log(query)
+                        sql.Insert(connection, query)
+                            .then(function (succeeded) {
+                                resolve(succeeded);
+                            })
+                            .catch(
+                            function (ans) {
+                                resolve(false)
+                            })
+                    }
+                    )
+
+            });
+
+    }
+
+    let generateSecurityQuestionQuery = function (req) {
+        return new Promise(
+            function (resolve, reject) {
+                questions = req.body.SecurityQuestions;
+                var query = "INSERT INTO [Questions] (Username, Question, Answer ) VALUES ";
+                for (i = 0; i < questions.Length; i++) {
+                    if (i > 0) {
+                        query += ",";
+                    }
+                    query += "('" + username + "\', \'" + questions[i].Question + "\', \'" + questions[i].Answer + "\')";
+                }
+                resolve(query);
+            });
+    }
 });
