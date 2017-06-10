@@ -97,8 +97,17 @@ connection.on('connect', function (err) {
                                 UpdateSecurityQuestion(req)
                                     .then(function (reason) {
                                         if (reason) {
-                                            var myObj = { "Succeeded": true, "Details": "Registration succeeded!" };
-                                            res.send(myObj);
+                                            UpdateUserCategories(req)
+                                                .then(function (reason) {
+                                                    if (reason) {
+                                                        var myObj = { "Succeeded": true, "Details": "Registration succeeded!" };
+                                                        res.send(myObj);
+                                                    }
+                                                })
+                                                .catch(function (reason) {
+                                                    var myObj = { "Succeeded": false, "Details": reason };
+                                                    res.send(myObj);
+                                                })
                                         }
                                     })
                                     .catch(function (reason) {
@@ -296,7 +305,7 @@ connection.on('connect', function (err) {
                             .from("[dbo].[User-Categories]")
                             .where("[Username] = '{0}'".replace("{0}", req.body.Username))
                             .toString()
-                             + ")")
+                        + ")")
                         .toString()
                 );
                 console.log("Query is: " + query)
@@ -490,7 +499,7 @@ connection.on('connect', function (err) {
                         if (ans.length == 0)
                             resolve(true)
                         else
-                            resolve(false);
+                            reject("User name already exists");
                     })
             }
         )
@@ -563,4 +572,42 @@ connection.on('connect', function (err) {
                 }
             });
     }
+
+    let UpdateUserCategories = function (req) {
+        return new Promise(
+            function (resolve, reject) {
+
+                generateCatgeoriesQuery(req)
+                    .then(function (query) {
+                        console.log(query)
+                        sql.Insert(connection, query)
+                            .then(function (succeeded) {
+                                resolve(succeeded);
+                            })
+                            .catch(function (ans) {
+                                reject(ans)
+                            })
+                    })
+
+            });
+
+    }
+
+    let generateCatgeoriesQuery = function (req) {
+        return new Promise(
+            function (resolve, reject) {
+                categories = req.body.Categories;
+                var query = "INSERT INTO [User-Categories] (Username, CategoryID ) VALUES ";
+                for (i = 0; i < questions.length; i++) {
+                    if (i > 0) {
+                        query += ",";
+                    }
+                    query += "('" + req.body.Username + "\', " + categories[i] + " )";
+                    if (i == questions.length - 1) {
+                        resolve(query);
+                    }
+                }
+            });
+    }
+
 });
