@@ -6,8 +6,9 @@ var Connection = require('tedious').Connection;
 var Request = require('tedious').Request;
 var moment = require('moment');
 var squel = require("squel");
-
+var Cookies = require('js-cookie');
 var conversionRate = 3.7;
+
 
 var app = express(); // activating express
 //var Connection = require('tedious').Connection;
@@ -38,10 +39,21 @@ connection.on('connect', function (err) {
         res.send("Connected to DB.");
     });
 
+    app.post('/Login', function (req, res) {
+        validateLoginDetails(req)
+            .then(function (loginSucceeded) {
+                Cookies.set('name', 'value', { expires: 1 });
+                res.send("Great Success");
+            })
+            .catch(function (reason) {
+                res.send(reason);
+            })
+
+    })
+
+
+
     app.get('/GetCountryList', function (req, res) {
-
-
-
         buildGetCountriesQuerry(req)
             .then(function (query) {
                 sql.Select(connection, query)
@@ -51,10 +63,11 @@ connection.on('connect', function (err) {
                     )
 
             })
-
     });
 
     app.get('/GetHottest5', function (req, res) {
+
+        var x = Cookies.get('name'); // => 'value' 
 
 
         buildGetGetHottest5Querry(req)
@@ -156,12 +169,10 @@ connection.on('connect', function (err) {
         );
 
         sql.Select(connection, query)
-            .then(function (ans)
-            {
+            .then(function (ans) {
                 res.send(ans);
             })
-            .catch(function (ans)
-            {
+            .catch(function (ans) {
                 res.send(ans);
             })
 
@@ -174,9 +185,9 @@ connection.on('connect', function (err) {
                 .from("[Users]")
                 .left_join("[dbo].[Questions]", null, "[dbo].[Users].[Username] =  [dbo].[Questions].[Username]")
                 .field("Password")
-                .where("[Users].[Username] = \'{0}\'".replace('{0}', req.body.Username).replace(' ',''))//get username from stored value clientside
+                .where("[Users].[Username] = \'{0}\'".replace('{0}', req.body.Username).replace(' ', ''))//get username from stored value clientside
                 .where("Question = \'{0}\'".replace('{0}', req.body.Question).replace(' ', ''))//get answer from stored value clientside
-                .where("Answer = \'{0}\'".replace('{0}', req.body.Answer).replace(' ',''))
+                .where("Answer = \'{0}\'".replace('{0}', req.body.Answer).replace(' ', ''))
                 .toString()
         );
 
@@ -365,25 +376,25 @@ connection.on('connect', function (err) {
         return new Promise(
             function (resolve, reject) {
                 var strWhere = "";
-                if (req.body.BeerName != "") {
+                if (typeof req.body.BeerName !== 'undefined' && req.body.BeerName != "") {
                     strWhere += "[dbo].[Beers].[Name] = '{0}'".replace('{0}', req.body.BeerName);
                 }
-                if (req.body.CategoryID != "") {
+                if (typeof req.body.CategoryID !== 'undefined' && req.body.CategoryID != "") {
                     if (strWhere != "")
                         strWhere += " AND ";
                     strWhere += "[dbo].[Beers].[CategoryID] = '{0}'".replace('{0}', req.body.CategoryID);
                 }
-                if (req.body.AlcoholPercentage != "") {
+                if (typeof req.body.AlcoholPercentage !== 'undefined' && req.body.AlcoholPercentage != "") {
                     if (strWhere != "")
                         strWhere += " AND ";
                     strWhere += "[dbo].[Beers].[AlcoholPercentage] = '{0}'".replace('{0}', req.body.AlcoholPercentage);
                 }
-                if (req.body.Price != "") {
+                if (typeof req.body.Price !== 'undefined' && req.body.Price != "") {
                     if (strWhere != "")
                         strWhere += " AND ";
                     strWhere += "[dbo].[Beers].[Price] = '{0}'".replace('{0}', req.body.Price);
                 }
-                if (req.body.Volume != "") {
+                if (typeof req.body.Volume !== 'undefined' && req.body.Volume != "") {
                     if (strWhere != "")
                         strWhere += " AND ";
                     strWhere += "[dbo].[Beers].[Volume] = '{0}'".replace('{0}', req.body.Volume);
@@ -435,7 +446,8 @@ connection.on('connect', function (err) {
                 var query = (
                     squel.select()
                         .from("[dbo].[Stock]")
-                        .where("[dbo].[Stock].[BeerID] = {0}  AND [dbo].[Stock].[Stock] > 0".replace('{0}', req.body.BeerID))
+                        .where("[dbo].[Stock].[BeerID] = {0}  AND [dbo].[Stock].[Stock] >= {1}".replace('{0}', req.body.BeerID)
+                            .replace('{1}', req.body.Quantity))
                         .toString()
                 );
                 console.log("Query is: " + query)
@@ -586,7 +598,7 @@ connection.on('connect', function (err) {
                     if (i > 0) {
                         query += ",";
                     }
-                    query += "('" + req.body.Username + "\', \'" + questions[i].Question.replace('\?','') + "\', \'" + questions[i].Answer + "\')";
+                    query += "('" + req.body.Username + "\', \'" + questions[i].Question.replace('\?', '') + "\', \'" + questions[i].Answer + "\')";
                     if (i == questions.length - 1) {
                         resolve(query);
                     }
@@ -628,6 +640,32 @@ connection.on('connect', function (err) {
                         resolve(query);
                     }
                 }
+            });
+    }
+
+    let validateLoginDetails = function (req) {
+        return new Promise(
+            function (resolve, reject) {
+                var name = req.body.Username;
+                var pass = req.body.Password;
+                var query = (
+                    squel.select()
+                        .from("[dbo].[Users]")
+                        .where("[dbo].[Users].[Username] = \'{0}\'  AND [dbo].[Users].[Password] = \'{1}\'".replace('{0}', name)
+                            .replace('{1}', pass))
+                        .toString()
+                );
+                sql.Select(connection, query)
+                    .then(function (ans) {
+                        if (ans.length == 1)
+                            resolve(true)
+                        else
+                            reject("Wrong Username/Password");
+                    })
+                    .catch(function (ans) {
+                        reject(ans);
+                    })
+
             });
     }
 

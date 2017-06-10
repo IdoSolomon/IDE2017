@@ -12,10 +12,11 @@
     "cookies": "^0.7.0",
     "cors": "^2.8.3",
     "express": "^4.15.3",
+    "js-cookie": "^2.1.4",
     "moment": "^2.18.1",
     "promise": "^7.1.1",
     "squel": "^5.10.0",
-    "tedious": "^2.0.0"
+    "tedious": "^2.0.1"
   },
   "devDependencies": {}
 }
