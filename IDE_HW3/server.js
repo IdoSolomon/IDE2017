@@ -841,7 +841,7 @@ connection.on('connect', function(err) {
             });
     }
 
-    let validateUserIsManager = function(req) {
+    let validateUserIsManagers = function(req) {
         return new Promise(
             function(resolve, reject) {
                 var name = req.body.Username;
