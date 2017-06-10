@@ -66,8 +66,6 @@ connection.on('connect', function (err) {
                     )
 
             })
-
-
     });
 
     app.get('/GetNewProducts', function (req, res) {
@@ -76,8 +74,7 @@ connection.on('connect', function (err) {
                 sql.Select(connection, query)
                     .then(function (ans) {
                         res.send(ans);
-                    }
-                    )
+                    })
 
             })
 
@@ -144,9 +141,9 @@ connection.on('connect', function (err) {
             squel.select()
                 .from("Questions")
                 .field("Answer")
-                .where("Username = ?", req.body.Username)//get username from stored value clientside
-                .where("Question = ?", req.body.Question)//get answer from stored value clientside
-                .where("Answer = ?", req.body.Answer)
+                .where("Username = {0}".replace('{0}', req.body.Username))//get username from stored value clientside
+                .where("Question = {0}".replace('{0}', req.body.Question))//get answer from stored value clientside
+                .where("Answer = {0}".replace('{0}', req.body.Answer))
                 .toString()
         );
 
@@ -173,25 +170,49 @@ connection.on('connect', function (err) {
 
     app.post('/GetRecommended', function (req, res) {
 
-        //TODO
+        buildGetRecommendedQuery(req)
+            .then(function (query) {
+                sql.Select(connection, query)
+                    .then(function (ans) {
+                        res.send(ans);
+                    })
+            })
 
     });
 
     app.post('/Search', function (req, res) {
 
-        //TODO
+        buildSearchQuery(req)
+            .then(function (query) {
+                sql.Select(connection, query)
+                    .then(function (ans) {
+                        res.send(ans);
+                    })
+            })
 
     });
 
     app.post('/GetItemDetails', function (req, res) {
 
-        //TODO
+        buildGetItemDetailsQuery(req)
+            .then(function (query) {
+                sql.Select(connection, query)
+                    .then(function (ans) {
+                        res.send(ans);
+                    })
+            })
 
     });
 
     app.post('/GetPastOrders', function (req, res) {
 
-        //TODO
+        buildGetPastOrdersQuery(req)
+            .then(function (query) {
+                sql.Select(connection, query)
+                    .then(function (ans) {
+                        res.send(ans);
+                    })
+            })
 
     });
 
@@ -203,10 +224,173 @@ connection.on('connect', function (err) {
 
     app.post('/IsInStock', function (req, res) {
 
-        //TODO
+        buildIsInStockQuery(req)
+            .then(function (query) {
+                sql.Select(connection, query)
+                    .then(function (ans) {
+                        var verdict = [];
+                        if (ans.length > 0)
+                            verdict.push(true);
+                        else
+                            verdict.push(false);
+                        res.send(verdict);
+                    })
+
+            })
 
     });
 
+    let buildGetOrderSumQuery = function (req) {
+        return new Promise(
+            function (resolve, reject) {
+                var query = (
+                    squel.select()
+                        .field()
+                        .from()
+                        .where()
+                        .toString()
+                );
+                console.log("Query is: " + query)
+                resolve(query)
+            }
+        );
+    }
+
+    let buildGetRecommendedQuery = function (req) {
+        return new Promise(
+            function (resolve, reject) {
+                var query = (
+                    squel.select()
+                        .field("[ID]")
+                        .field("[CategoryID]")
+                        .field("[Name]")
+                        .field("[AlcoholPercentage]")
+                        .field("[Price]")
+                        .field("[Volume]")
+                        .field("[AddedOn]")
+                        .from("[dbo].[Beers]")
+                        .where("[CategoryID] IN (" + squel.select()
+                            .field("[CategoryID]")
+                            .from("[dbo].[User-Categories]")
+                            .where("[Username] = '{0}'".replace("{0}", req.body.Username))
+                            .toString()
+                             + ")")
+                        .toString()
+                );
+                console.log("Query is: " + query)
+                resolve(query)
+            }
+        );
+    }
+
+    let buildGetPastOrdersQuery = function (req) {
+        return new Promise(
+            function (resolve, reject) {
+                var query = (
+                    squel.select()
+                        .field("[dbo].[User-Orders].[OrderID]")
+                        .field("[dbo].[User-Orders].[OrderDate]")
+                        .field("[dbo].[User-Orders].[ShippingDate]")
+                        .field("[dbo].[User-Orders].[Total]")
+                        .field("[dbo].[Beers].[Name]")
+                        .field("[dbo].[Beers].[AlcoholPercentage]")
+                        .field("[dbo].[Beers].[Price]")
+                        .field("[dbo].[Beers].[Volume]")
+                        .field("[dbo].[Orders].[Quantity]")
+                        .from("[dbo].[User-Orders]")
+                        .left_join("[dbo].[Orders]", null, "[dbo].[User-Orders].[OrderID] =  [dbo].[Orders].[OrderID]")
+                        .left_join("[dbo].[Beers]", null, "[dbo].[Orders].[BeerID] =  [dbo].[Beers].[ID]")
+                        .where("[dbo].[User-Orders].[Username] = '{0}'".replace("{0}", req.body.Username))
+                        .toString()
+                );
+                console.log("Query is: " + query)
+                resolve(query)
+            }
+        );
+    }
+
+    let buildSearchQuery = function (req) {
+        return new Promise(
+            function (resolve, reject) {
+                var strWhere = "";
+                if (req.body.BeerName != "") {
+                    strWhere += "[dbo].[Beers].[Name] = '{0}'".replace('{0}', req.body.BeerName);
+                }
+                if (req.body.CategoryID != "") {
+                    if (strWhere != "")
+                        strWhere += " AND ";
+                    strWhere += "[dbo].[Beers].[CategoryID] = '{0}'".replace('{0}', req.body.CategoryID);
+                }
+                if (req.body.AlcoholPercentage != "") {
+                    if (strWhere != "")
+                        strWhere += " AND ";
+                    strWhere += "[dbo].[Beers].[AlcoholPercentage] = '{0}'".replace('{0}', req.body.AlcoholPercentage);
+                }
+                if (req.body.Price != "") {
+                    if (strWhere != "")
+                        strWhere += " AND ";
+                    strWhere += "[dbo].[Beers].[Price] = '{0}'".replace('{0}', req.body.Price);
+                }
+                if (req.body.Volume != "") {
+                    if (strWhere != "")
+                        strWhere += " AND ";
+                    strWhere += "[dbo].[Beers].[Volume] = '{0}'".replace('{0}', req.body.Volume);
+                }
+                var query = (
+                    squel.select()
+                        .field("[dbo].[Beers].[Name]", "BeerName")
+                        .field("[dbo].[Categories].[Name]", "CategoryName")
+                        .field("[AlcoholPercentage]")
+                        .field("[Price]")
+                        .field("[Volume]")
+                        .field("[AddedOn]")
+                        .from("[dbo].[Beers]")
+                        .left_join("[dbo].[Categories]", null, "[dbo].[Beers].[CategoryID] = [dbo].[Categories].[ID]")
+                        .where(strWhere)
+                        .toString()
+                );
+                console.log("Query is: " + query)
+                resolve(query)
+            }
+        );
+    }
+
+    let buildGetItemDetailsQuery = function (req) {
+        return new Promise(
+            function (resolve, reject) {
+                var query = (
+                    squel.select()
+                        .field("[dbo].[Beers].[Name]", "BeerName")
+                        .field("[dbo].[Categories].[Name]", "CategoryName")
+                        .field("[AlcoholPercentage]")
+                        .field("[Price]")
+                        .field("[Volume]")
+                        .field("[AddedOn]")
+                        .from("[dbo].[Beers]")
+                        .left_join("[dbo].[Categories]", null, "[dbo].[Beers].[CategoryID] = [dbo].[Categories].[ID]")
+                        .where("[dbo].[Beers].[ID] = {0}".replace('{0}', req.body.BeerID))
+                        .toString()
+                );
+                console.log("Query is: " + query)
+                resolve(query)
+            }
+        );
+    }
+
+    let buildIsInStockQuery = function (req) {
+        return new Promise(
+            function (resolve, reject) {
+                var query = (
+                    squel.select()
+                        .from("[dbo].[Stock]")
+                        .where("[dbo].[Stock].[BeerID] = {0}  AND [dbo].[Stock].[Stock] > 0".replace('{0}', req.body.BeerID))
+                        .toString()
+                );
+                console.log("Query is: " + query)
+                resolve(query)
+            }
+        );
+    }
 
     let buildGetCountriesQuerry = function (req) {
         return new Promise(
