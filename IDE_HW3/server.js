@@ -268,17 +268,53 @@ connection.on('connect', function (err) {
     });
 
     app.post('/MakeOrder', function (req, res) {
-
-        buildMakeOrderQuery(req)
+        buildStockCheckQuery(req)
             .then(function (query) {
-                sql.Insert(connection, query)
+                sql.Select(connection, query)
                     .then(function (ans) {
-                        //console.log(ans[0]);
+                        if (ans.length == 0) {
+                            buildMakeOrderQuery(req)
+                                .then(function (query) {
+                                    sql.Insert(connection, query)
+                                        .then(function (success) {
+                                            if (success == true)
+                                                buildGetOrderIDQuery(req)
+                                                    .then(function (query) {
+                                                        sql.Select(connection, query)
+                                                            .then(function (ans) {
+                                                                var id = ans[0].OrderID;
+                                                                buildGetOrderItemsQuery(req, id)
+                                                                    .then(function (query) {
+                                                                        sql.Insert(connection, query)
+                                                                            .then(function (ans) {
+                                                                                if (success == true)
+                                                                                    buildUpdateTotalQuery(req, id)
+                                                                                        .then(function (query) {
+                                                                                            sql.Update(connection, query)
+                                                                                                .then(function (ans) {
+                                                                                                    buildUpdateStockQuery(req, id)
+                                                                                                        .then(function (query) {
+                                                                                                            sql.Update(connection, query)
+                                                                                                                .then(function (ans) {
+                                                                                                                    res.send(ans);
+                                                                                                                })
+
+                                                                                                        })
+                                                                                                })
+                                                                                        })
+                                                                            })
+                                                                    })
+                                                            })
+                                                    })
+                                        })
+                                })
+                        }
+                        else
+                            res.send(false);
                     })
-
             })
-
     });
+
 
     app.post('/IsInStock', function (req, res) {
 
@@ -297,6 +333,109 @@ connection.on('connect', function (err) {
             })
 
     });
+
+    let buildStockCheckQuery = function (req) {
+        return new Promise(
+            function (resolve, reject) {
+                items = req.body.Items;
+                var query = "SELECT [BeerID] FROM [dbo].[Stock] WHERE ";
+
+                for (i = 0; i < items.length; i++) {
+                    if (i > 0) {
+                        query += " OR ";
+                    }
+                    query += "(([Quantity] < \'" + items[i].Quantity + "\') AND ([BeerID] = \'" + items[i].BeerID + "\'))";
+                    if (i == items.length - 1) {
+                        console.log("Query is: " + query)
+                        resolve(query);
+                    }
+                }
+            }
+        );
+    }
+
+    let buildUpdateStockQuery = function (req, id) {
+        return new Promise(
+            function (resolve, reject) {
+                var query = "UPDATE Table_A SET Table_A.[Quantity] = (Table_A.[Quantity] - Table_B.[Quantity]) FROM [dbo].[Stock] AS Table_A INNER JOIN [dbo].[Orders] AS Table_B ON Table_A.[BeerID] = Table_B.[BeerID] WHERE Table_B.[OrderID] = '{0}'".replace("{0}", id);
+
+                //var query = (
+                //    squel.update()
+                //        .table("[dbo].[Stock]", "s")
+                //        .table("[dbo].[Orders]", "o")
+                //        .set("s.[Quantity] = (s.[Quantity] - o.[Quantity])")
+                //        .where("s.[BeerID] = o.[BeerID]")
+                //        .where("o.[OrderID] = '{0}'".replace("{0}", id))
+                //        .toString()
+                //);
+                console.log("Query is: " + query)
+                resolve(query)
+            }
+        );
+    }
+
+    let buildUpdateTotalQuery = function (req, id) {
+        return new Promise(
+            function (resolve, reject) {
+                var query = (
+                    squel.update()
+                        .table("[dbo].[User-Orders]")
+                        .set("[Total]", squel.select()
+                            .field("SUM ([dbo].[Beers].[Price] * [dbo].[Orders].[Quantity])")
+                            .from("[dbo].[Orders]")
+                            .left_join("[dbo].[Beers]", null, "([Orders].[BeerID] = [Beers].[ID]) AND ([Orders].[OrderID] = '{0}')".replace("{0}", id)))
+                        .where("[Username] = '{0}'".replace("{0}", req.body.Username))
+                        .where("[OrderDate] = '{0}'".replace("{0}", req.body.OrderDate))
+                        .where("[ShippingDate] = '{0}'".replace("{0}", req.body.ShippingDate))
+                        .where("[Currency] = '{0}'".replace("{0}", req.body.Currency))
+                        .where("[CreditCard] = '{0}'".replace("{0}", req.body.CreditCard))
+                        .toString()
+                );
+                console.log("Query is: " + query)
+                resolve(query)
+            }
+        );
+    }
+
+    let buildGetOrderItemsQuery = function (req, id) {
+        return new Promise(
+            function (resolve, reject) {
+                items = req.body.Items;
+                var query = "INSERT INTO [dbo].[Orders] ([OrderID], [BeerID], [Quantity]) VALUES";
+
+                for (i = 0; i < items.length; i++) {
+                    if (i > 0) {
+                        query += ",";
+                    }
+                    query += "('" + id + "\', \'" + items[i].BeerID + "\', \'" + items[i].Quantity + "\')";
+                    if (i == items.length - 1) {
+                        console.log("Query is: " + query)
+                        resolve(query);
+                    }
+                }
+            }
+        );
+    }
+
+    let buildGetOrderIDQuery = function (req) {
+        return new Promise(
+            function (resolve, reject) {
+                var query = (
+                    squel.select()
+                        .field("[OrderID]")
+                        .from("[dbo].[User-Orders]")
+                        .where("[Username] = '{0}'".replace("{0}", req.body.Username))
+                        .where("[OrderDate] = '{0}'".replace("{0}", req.body.OrderDate))
+                        .where("[ShippingDate] = '{0}'".replace("{0}", req.body.ShippingDate))
+                        .where("[Currency] = '{0}'".replace("{0}", req.body.Currency))
+                        .where("[CreditCard] = '{0}'".replace("{0}", req.body.CreditCard))
+                        .toString()
+                );
+                console.log("Query is: " + query)
+                resolve(query)
+            }
+        );
+    }
 
     let buildMakeOrderQuery = function (req) {
         return new Promise(
@@ -361,8 +500,8 @@ connection.on('connect', function (err) {
                         .field("[dbo].[Beers].[Volume]")
                         .field("[dbo].[Orders].[Quantity]")
                         .from("[dbo].[User-Orders]")
-                        .left_join("[dbo].[Orders]", null, "[dbo].[User-Orders].[OrderID] =  [dbo].[Orders].[OrderID]")
-                        .left_join("[dbo].[Beers]", null, "[dbo].[Orders].[BeerID] =  [dbo].[Beers].[ID]")
+                        .left_join("[dbo].[Orders]", null, "[dbo].[User-Orders].[OrderID] = [dbo].[Orders].[OrderID]")
+                        .left_join("[dbo].[Beers]", null, "[dbo].[Orders].[BeerID] = [dbo].[Beers].[ID]")
                         .where("[dbo].[User-Orders].[Username] = '{0}'".replace("{0}", req.body.Username))
                         .toString()
                 );
@@ -526,7 +665,7 @@ connection.on('connect', function (err) {
                         .where("[Users].[Username] = " + "'" + name + "'")
                         .toString()
                 );
-                console.log(query)
+                console.log("Query is: " + query)
                 sql.Select(connection, query).then(
                     function (ans) {
                         if (ans.length == 0)
@@ -556,6 +695,7 @@ connection.on('connect', function (err) {
                         .set("CountryID", country)
                         .toString()
                 );
+                console.log("Query is: " + query)
 
                 sql.Insert(connection, query)
                     .then(function (succeeded) {
@@ -600,6 +740,7 @@ connection.on('connect', function (err) {
                     }
                     query += "('" + req.body.Username + "\', \'" + questions[i].Question.replace('\?', '') + "\', \'" + questions[i].Answer + "\')";
                     if (i == questions.length - 1) {
+                        console.log("Query is: " + query)
                         resolve(query);
                     }
                 }
