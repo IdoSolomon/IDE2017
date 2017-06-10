@@ -10,58 +10,63 @@ var Request = require('tedious').Request;
 //    });
 //}
 
-exports.Select = function(connection, query, callback) {
-    console.log('Reading rows from the Table...');
-    var info = [];
-    var res = [];
+exports.Select = function (connection, query) {
+    return new Promise(function(resolve, reject){
+        console.log('Reading rows from the Table...');
+        console.log(query);
 
-    var req = new Request(query, function (err, rowCount) {
-        if (err) {
-            console.log(err);
-        }
-    });
+        var info = [];
+        var res = [];
 
-    req.on('columnMetadata', function (columns) {
-
-        columns.forEach(function (column) {
-            if (column.colName !== null) {
-                info.push(column.colName);
+        var req = new Request(query, function (err, rowCount) {
+            if (err) {
+                console.log(err);
             }
         });
+
+        req.on('columnMetadata', function (columns) {
+
+            columns.forEach(function (column) {
+                if (column.colName !== null) {
+                    info.push(column.colName);
+                }
+            });
+        });
+
+        req.on('row', function (row) {
+
+            var item = {};
+            for (i = 0; i < row.length; i++) {
+                item[info[i]] = row[i].value;
+            }
+            res.push(item);
+        });
+
+        req.on('requestCompleted', function () {
+
+            resolve(res);
+        });
+
+        connection.execSql(req);
     });
-
-    req.on('row', function (row) {
-
-        var item = {};
-        for (i = 0; i < row.length; i++) {
-            item[info[i]] = row[i].value;
-        }
-        res.push(item);
-    });
-
-    req.on('requestCompleted', function () {
-        
-        callback(res);
-    });
-
-    connection.execSql(req);
 }
 
-exports.Insert = function(connection, query, callback) {
+exports.Insert = function(connection, query) {
     console.log('Adding rows to the Table...');
+    return new Promise(function (resolve, reject) {
+        var req = new Request(query, function (err, rowCount) {
+            if (err) {
+                console.log(err);
+            }
+        });
 
-    var req = new Request(query, function (err, rowCount) {
-        if (err) {
-            console.log(err);
-        }
+        req.on('requestCompleted', function () {
+
+            resolve("Request Completed");
+        });
+
+        connection.execSql(req);
     });
-
-    req.on('requestCompleted', function () {
-        
-        callback("Request Completed");
-    });
-
-    connection.execSql(req);
 
 }
 
@@ -100,4 +105,6 @@ exports.Update = function(connection, query, callback) {
     connection.execSql(req);
 
 }
+
+
 
