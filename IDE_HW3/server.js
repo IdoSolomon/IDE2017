@@ -133,23 +133,16 @@ connection.on('connect', function (err) {
 
 
     app.post('/IsUniqueUsername', function (req, res) {
-        var name = req.body.Username;
-        var query = (
-            squel.select()
-                .from("Users")
-                .field("Username")
-                .where("Username = ?", req.body.Username)
-                .toString()
-        );
-
-        sql.Select(connection, query, function (ans) {
-            var verdict = [];
-            if (ans.length > 0)
-                verdict.push(false);
-            else
-                verdict.push(true);
-            res.send(verdict);
-        });
+        CheckIfUniqueUserName(req)
+            .then(function (reason) {
+                if (reason) {
+                    var myObj = { "Succeeded": true, "Details": "Registration succeeded!" };
+                    res.send(myObj);
+                }
+            })
+            .catch(function (reason) {
+                res.send({ "Ans": false, "Details": reason });
+            })
     });
 
     app.post('/ForgotPassword', function (req, res) {
@@ -162,7 +155,15 @@ connection.on('connect', function (err) {
                 .toString()
         );
 
-        sql.Select(connection, query, function (ans) { res.send(ans); });
+        sql.Select(connection, query)
+            .then(function (ans)
+            {
+                res.send(ans);
+            })
+            .catch(function (ans)
+            {
+                res.send(ans);
+            })
 
     });
 
@@ -170,22 +171,30 @@ connection.on('connect', function (err) {
 
         var query = (
             squel.select()
-                .from("Questions")
-                .field("Answer")
-                .where("Username = {0}".replace('{0}', req.body.Username))//get username from stored value clientside
-                .where("Question = {0}".replace('{0}', req.body.Question))//get answer from stored value clientside
-                .where("Answer = {0}".replace('{0}', req.body.Answer))
+                .from("[Users]")
+                .left_join("[dbo].[Questions]", null, "[dbo].[Users].[Username] =  [dbo].[Questions].[Username]")
+                .field("Password")
+                .where("[Users].[Username] = \'{0}\'".replace('{0}', req.body.Username).replace(' ',''))//get username from stored value clientside
+                .where("Question = \'{0}\'".replace('{0}', req.body.Question).replace(' ', ''))//get answer from stored value clientside
+                .where("Answer = \'{0}\'".replace('{0}', req.body.Answer).replace(' ',''))
                 .toString()
         );
 
-        sql.Select(connection, query, function (ans) {
-            var verdict = [];
-            if (ans.length > 0)
-                verdict.push(false);
-            else
-                verdict.push(true);
-            res.send(verdict);
-        });
+        sql.Select(connection, query)
+            .then(function (ans) {
+                if (ans.length > 0) {
+                    var myObj = { "CorrectAnswer": true, "Password": ans[0].trim() };
+                    res.send(myObj);
+                }
+                else {
+                    var myObj = { "CorrectAnswer": false, "Password": "" };
+                    res.send(myObj);
+                }
+            })
+            .catch(function (ans) {
+                var myObj = { "CorrectAnswer": false, "Password": "", "Details": ans };
+                res.send(myObj);
+            })
 
     });
 
@@ -577,7 +586,7 @@ connection.on('connect', function (err) {
                     if (i > 0) {
                         query += ",";
                     }
-                    query += "('" + req.body.Username + "\', \'" + questions[i].Question + "\', \'" + questions[i].Answer + "\')";
+                    query += "('" + req.body.Username + "\', \'" + questions[i].Question.replace('\?','') + "\', \'" + questions[i].Answer + "\')";
                     if (i == questions.length - 1) {
                         resolve(query);
                     }
