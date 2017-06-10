@@ -91,7 +91,7 @@ connection.on('connect', function (err) {
     });
 
     app.post('/Register', function (req, res) {
-        registerUser(req)
+        isUniqueUSerName(req)
             .then(function (succeded, errMsg) {
                 res.send({ "Succeeded": true, "Message": "Registration cmpleted successfuly!" })
             })
@@ -268,12 +268,12 @@ connection.on('connect', function (err) {
     let isUniqueUSerName = function (req) {
         return new Promise(
             function (resolve, reject) {
-                var name = req.body.Username;
+                var name = req.body.Username.toString;
                 var query = (
                     squel.select()
-                        .from("Users")
-                        .field("Username")
-                        .where("Username = {0}".replace("{0}", req.body.Username))
+                        .from("[dbo].[Users]")
+                        .field("[Users].[Username]")
+                        .where("[Users].[Username] = '{0}'".replace("{0}", name))
                         .toString()
 
                 );
