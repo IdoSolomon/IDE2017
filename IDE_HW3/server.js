@@ -335,21 +335,69 @@ connection.on('connect', function (err) {
     });
 
 
+    app.post('/ManagerLogin', function (req, res) {
+
+        validateManagerLogin(req)
+            .then(function (query) {
+                res.send("Login as manager succeeded");
+            })
+            .catch(function (reson) {
+                res.send(reson);
+            })
+    });
+
+
+
     app.post('/UpdateItemDetails', function (req, res) {
 
-        buildItemUpdateQuery(req)
+        validateUserIsManagers
             .then(function (query) {
-                sql.Update(connection, query)
-                    .then(function (ans) {
-                        res.send(ans);
+                buildItemUpdateQuery(req)
+                    .then(function (query) {
+                        sql.Update(connection, query)
+                            .then(function (ans) {
+                                res.send(ans);
+                            })
+                            .catch(function (reson) {
+                                res.send(reson);
+                            })
                     })
-
             })
+            .catch(function (reson) {
+                res.send(reson);
+            })
+
+
+
 
     });
 
     app.post('/AddItem', function (req, res) {
-        //TODO
+        validateUserIsManagers(req)
+            .then(function (query) {
+                var query = (
+                    squel.insert()
+                        .into("[dbo].[Beers]")
+                        .set("[CategoryID]", req.body.CategoryID)
+                        .set("[Name]", req.body.Name)
+                        .set("[AlcoholPercentage]", req.body.AlcoholPercentage)
+                        .set("[Price]", req.body.Price)
+                        .set("[Volume]", req.body.Volume)
+                        .set("[AddedOn]", moment().format('YYYY-MM-DDTHH:MM:SS'))
+                        .toString()
+                );
+                sql.Insert(connection, query)
+                    .then(function (ans) {
+                        res.send("PRoduct added successfully");
+                    })
+                    .catch(function (reson) {
+                        res.send(reson);
+                    })
+
+            })
+            .catch(function (reson) {
+                res.send(reson);
+            })
     });
 
     app.post('/RemoveItem', function (req, res) {
@@ -357,7 +405,29 @@ connection.on('connect', function (err) {
     });
 
     app.post('/AddUser', function (req, res) {
-        //TODO
+        validateUserIsManagers(req)
+            .then(function (query) {
+                var query = (
+                    squel.insert()
+                        .into("[dbo].[Users]")
+                        .set("[Username]", req.body.AddedUsername)
+                        .set("[Password]", req.body.Password)
+                        .set("[CountryID]", req.body.CountryID)
+                        .set("[IsManager]", req.body.IsManager)
+                        .toString()
+                );
+                sql.Insert(connection, query)
+                    .then(function (ans) {
+                        res.send("User added successfuly");
+                    })
+                    .catch(function (reson) {
+                        res.send(reson);
+                    })
+
+            })
+            .catch(function (reson) {
+                res.send(reson);
+            })
     });
 
     app.post('/RemoveUser', function (req, res) {
@@ -365,11 +435,62 @@ connection.on('connect', function (err) {
     });
 
     app.post('/GetInventory', function (req, res) {
-        //TODO
+        validateUserIsManagers(req)
+            .then(function (query) {
+                var query = (
+                    squel.select()
+                        .from("[dbo].[Stock]")
+                        .left_join("[dbo].[Beers]", null, "([Stock].[BeerID] = [Beers].[ID])")
+                        .field("[Stock].[BeerID]")
+                        .field("LTRIM(RTRIM([Beers].[Name])) AS [Beer Name]")
+                        .field("[Stock].[Quantity]")
+
+                        .toString()
+                );
+                sql.Select(connection, query)
+                    .then(function (ans) {
+                        res.send(ans);
+                    })
+                    .catch(function (reson) {
+                        res.send(reson);
+                    })
+
+            })
+            .catch(function (reson) {
+                res.send(reson);
+            })
     });
 
     app.post('/UpdateInventory', function (req, res) {
-        //TODO
+
+        validateUserIsManagers(req)
+            .then(function (query) {
+                var query = (
+                    squel.update()
+                        .table("[dbo].[Stock]")
+                        .set("[dbo].[Stock].[Quantity]", req.body.Quantity)
+                        .where("[dbo].[Stock].[BeerID] = '{0}'".replace("{0}", req.body.BeerID))
+                        .toString()
+                );
+                sql.Update(connection, query)
+                    .then(function (ans) {
+                        res.send("Updated successfuly");
+                    })
+                    .catch(function (reson) {
+                        res.send(reson);
+                    })
+
+            })
+            .catch(function (reson) {
+                res.send(reson);
+            })
+
+
+
+
+
+
+
     });
 
     let buildItemUpdateQuery = function (req) {
@@ -878,7 +999,7 @@ connection.on('connect', function (err) {
             });
     }
 
-    let validateUserIsManager = function (req) {
+    let validateManagerLogin = function (req) {
         return new Promise(
             function (resolve, reject) {
                 var name = req.body.Username;
@@ -889,32 +1010,7 @@ connection.on('connect', function (err) {
                         .from("[dbo].[Users]")
                         .where("[dbo].[Users].[Username] = \'{0}\'".replace('{0}', name))
                         .where("[dbo].[Users].[IsManager] = 1")
-                        .where("[dbo].[Users].[IsManager] = 1".replace('{1}', pass))
-                        .toString()
-                );
-                sql.Select(connection, query)
-                    .then(function(ans) {
-                        if (ans.length == 1)
-                            resolve(true)
-                        else
-                            reject("You don`t have admin permission. Please go.");
-                    })
-                    .catch(function(ans) {
-                        reject(ans);
-                    })
-
-            });
-    }
-
-    let validateUserIsManagers = function(req) {
-        return new Promise(
-            function(resolve, reject) {
-                var name = req.body.Username;
-                var query = (
-                    squel.select()
-                        .from("[dbo].[Users]")
-                        .where("[dbo].[Users].[Username] = \'{0}\'  AND [dbo].[Users].[Password] = \'{1}\'".replace('{0}', name)
-                            .replace('{1}', pass))
+                        .where("[dbo].[Users].[Password] = \'{1}\'".replace('{1}', pass))
                         .toString()
                 );
                 sql.Select(connection, query)
@@ -922,7 +1018,31 @@ connection.on('connect', function (err) {
                         if (ans.length == 1)
                             resolve(true)
                         else
-                            reject("Wrong Username/Password");
+                            reject("You don`t have admin permission. Please go.");
+                    })
+                    .catch(function (ans) {
+                        reject(ans);
+                    })
+
+            });
+    }
+
+    let validateUserIsManagers = function (req) {
+        return new Promise(
+            function (resolve, reject) {
+                var name = req.body.Username;
+                var query = (
+                    squel.select()
+                        .from("[dbo].[Users]")
+                        .where("[dbo].[Users].[Username] = \'{0}\'  AND [dbo].[Users].[IsManager] = 1".replace('{0}', name))
+                        .toString()
+                );
+                sql.Select(connection, query)
+                    .then(function (ans) {
+                        if (ans.length == 1)
+                            resolve(true)
+                        else
+                            reject("User doesn`t have managers permissions");
                     })
                     .catch(function (ans) {
                         reject(ans);
