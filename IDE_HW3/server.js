@@ -334,34 +334,18 @@ connection.on('connect', function (err) {
 
     });
 
-    app.post('/ManagerLogin', function (req, res) {
-
-        managerLogin(req)
-            .then(function (query) {
-                res.send("Login as manager succeeded");
-            })
-            .catch(function (reson) {
-                res.send(reson);
-            })
-    });
 
     app.post('/UpdateItemDetails', function (req, res) {
-        validateUserIsManager(req)
-            .then(function (ans) {
-                if (ans == true) {
-                    buildItemUpdateQuery(req)
-                        .then(function (query) {
-                            sql.Update(connection, query)
-                                .then(function (ans) {
-                                    res.send(ans);
-                                })
 
-                        })
-                }
+        buildItemUpdateQuery(req)
+            .then(function (query) {
+                sql.Update(connection, query)
+                    .then(function (ans) {
+                        res.send(ans);
+                    })
+
             })
-            .catch(function (ans) {
-                res.send("User is not a manager.")
-            })
+
     });
 
     app.post('/AddItem', function (req, res) {
@@ -417,7 +401,7 @@ connection.on('connect', function (err) {
                 }
                 var query = (
                     squel.update()
-                        .table("[dbo].[Beers]")
+                        .table("[dbo].[Beer]")
                         .set(strSet)
                         .where("[ID] = '{0}'".replace("{0}", req.body.BeerID))
                         .toString()
@@ -894,7 +878,7 @@ connection.on('connect', function (err) {
             });
     }
 
-    let managerLogin = function (req) {
+    let validateUserIsManager = function (req) {
         return new Promise(
             function (resolve, reject) {
                 var name = req.body.Username;
@@ -905,31 +889,32 @@ connection.on('connect', function (err) {
                         .from("[dbo].[Users]")
                         .where("[dbo].[Users].[Username] = \'{0}\'".replace('{0}', name))
                         .where("[dbo].[Users].[IsManager] = 1")
-                        .where("[dbo].[Users].[Password] = \'{1}\'".replace('{1}', pass))
+                        .where("[dbo].[Users].[IsManager] = 1".replace('{1}', pass))
                         .toString()
                 );
                 sql.Select(connection, query)
-                    .then(function (ans) {
+                    .then(function(ans) {
                         if (ans.length == 1)
                             resolve(true)
                         else
                             reject("You don`t have admin permission. Please go.");
                     })
-                    .catch(function (ans) {
+                    .catch(function(ans) {
                         reject(ans);
                     })
 
             });
     }
 
-    let validateUserIsManager = function (req) {
+    let validateUserIsManagers = function(req) {
         return new Promise(
-            function (resolve, reject) {
+            function(resolve, reject) {
                 var name = req.body.Username;
                 var query = (
                     squel.select()
                         .from("[dbo].[Users]")
-                        .where("[dbo].[Users].[Username] = \'{0}\'  AND [dbo].[Users].[IsManager] = 1".replace('{0}', name))
+                        .where("[dbo].[Users].[Username] = \'{0}\'  AND [dbo].[Users].[Password] = \'{1}\'".replace('{0}', name)
+                            .replace('{1}', pass))
                         .toString()
                 );
                 sql.Select(connection, query)
