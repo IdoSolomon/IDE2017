@@ -401,7 +401,25 @@ connection.on('connect', function (err) {
     });
 
     app.post('/RemoveItem', function (req, res) {
-        //TODO
+        validateUserIsManagers(req)
+            .then(function (query) {
+                buildRemoveItemStockQuery(req)
+                    .then(function (query) {
+                        sql.Delete(connection, query)
+                            .then(function (ans) {
+                                buildRemoveItemQuery(req)
+                                    .then(function (query) {
+                                        sql.Delete(connection, query)
+                                            .then(function (ans) {
+                                                res.send(ans);
+                                            })
+                                    })
+                            })
+                    })
+            })
+            .catch(function (reson) {
+                res.send(reson);
+            })
     });
 
     app.post('/AddUser', function (req, res) {
@@ -431,7 +449,25 @@ connection.on('connect', function (err) {
     });
 
     app.post('/RemoveUser', function (req, res) {
-        //TODO
+        validateUserIsManagers(req)
+            .then(function (query) {
+                buildRemoveUserQuestionsQuery(req)
+                    .then(function (query) {
+                        sql.Delete(connection, query)
+                            .then(function (ans) {
+                                buildRemoveUserQuery(req)
+                                    .then(function (query) {
+                                        sql.Delete(connection, query)
+                                            .then(function (ans) {
+                                                res.send(ans);
+                                            })
+                                    })
+                            })
+                    })
+            })
+            .catch(function (reson) {
+                res.send(reson);
+            })
     });
 
     app.post('/GetInventory', function (req, res) {
@@ -484,14 +520,67 @@ connection.on('connect', function (err) {
             .catch(function (reson) {
                 res.send(reson);
             })
-
-
-
-
-
-
-
     });
+
+    let buildRemoveUserQuery = function (req) {
+        return new Promise(
+            function (resolve, reject) {
+                var query = (
+                    squel.delete()
+                        .from("[dbo].[Users]")
+                        .where("[Username] = '{0}'".replace('{0}', req.body.UsernameDel))
+                        .toString()
+                );
+                console.log("Query is: " + query)
+                resolve(query)
+            }
+        );
+    }
+
+    let buildRemoveUserQuestionsQuery = function (req) {
+        return new Promise(
+            function (resolve, reject) {
+                var query = (
+                    squel.delete()
+                        .from("[dbo].[Questions]")
+                        .where("[Username] = '{0}'".replace('{0}', req.body.UsernameDel))
+                        .toString()
+                );
+                console.log("Query is: " + query)
+                resolve(query)
+            }
+        );
+    }
+
+    let buildRemoveItemQuery = function (req) {
+        return new Promise(
+            function (resolve, reject) {
+                var query = (
+                    squel.delete()
+                        .from("[dbo].[Beers]")
+                        .where("[ID] = '{0}'".replace('{0}', req.body.BeerID))
+                        .toString()
+                );
+                console.log("Query is: " + query)
+                resolve(query)
+            }
+        );
+    }
+
+    let buildRemoveItemStockQuery = function (req) {
+        return new Promise(
+            function (resolve, reject) {
+                var query = (
+                    squel.delete()
+                        .from("[dbo].[Stock]")
+                        .where("[BeerID] = '{0}'".replace('{0}', req.body.BeerID))
+                        .toString()
+                );
+                console.log("Query is: " + query)
+                resolve(query)
+            }
+        );
+    }
 
     let buildItemUpdateQuery = function (req) {
         return new Promise(
@@ -522,7 +611,7 @@ connection.on('connect', function (err) {
                 }
                 var query = (
                     squel.update()
-                        .table("[dbo].[Beer]")
+                        .table("[dbo].[Beers]")
                         .set(strSet)
                         .where("[ID] = '{0}'".replace("{0}", req.body.BeerID))
                         .toString()
